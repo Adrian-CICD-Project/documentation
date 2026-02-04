@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Adrian Dmytryk - Junior DevOps Engineer</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#eef0f4;color:#2d2d2d}
+.wrap{max-width:900px;margin:0 auto;background:#fff;display:grid;grid-template-columns:265px 1fr;box-shadow:0 4px 24px rgba(0,0,0,.09);min-height:100vh}
+
+/* ── SIDEBAR ── */
+.side{background:#16162a;color:#cbd4e0;padding:42px 22px;position:relative;overflow:hidden}
+.side::before{content:'';position:absolute;top:-100px;right:-100px;width:250px;height:250px;background:radial-gradient(circle,rgba(99,102,241,.16),transparent 68%);pointer-events:none}
+.side::after{content:'';position:absolute;bottom:-80px;left:-80px;width:210px;height:210px;background:radial-gradient(circle,rgba(168,85,247,.13),transparent 68%);pointer-events:none}
+
+.hdr{text-align:center;margin-bottom:26px;position:relative;z-index:1}
+.hdr-name{font-size:20px;font-weight:700;color:#fff;letter-spacing:1.8px;margin-bottom:7px}
+.hdr-badge{display:inline-block;background:linear-gradient(135deg,#6366f1,#a855f7);color:#fff;font-size:8.5px;font-weight:700;letter-spacing:2.4px;text-transform:uppercase;padding:5px 14px;border-radius:20px}
+
+.ss{margin-top:22px;position:relative;z-index:1}
+.ss-t{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#6366f1;padding-bottom:5px;margin-bottom:10px;border-bottom:1px solid rgba(99,102,241,.22)}
+
+/* contact */
+.cr{display:flex;align-items:flex-start;gap:9px;margin:8px 0}
+.ci{width:26px;height:26px;min-width:26px;background:rgba(99,102,241,.12);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px}
+.cl{font-size:7.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#6366f1}
+.cv2{font-size:10.5px;color:#cbd4e0;word-break:break-all;margin-top:1px}
+
+/* skills */
+.sg{margin-bottom:11px}
+.sg-h{font-size:9.5px;font-weight:600;color:#a78bfa;margin-bottom:5px}
+.sg-w{display:flex;flex-wrap:wrap;gap:4px}
+.st{background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.2);color:#c4c9f5;font-size:9.5px;padding:2px 7px;border-radius:4px}
+
+/* lang */
+.lr{display:flex;justify-content:space-between;align-items:center;margin:6px 0}
+.ln{color:#fff;font-size:11px;font-weight:500}
+.ll{color:#6366f1;font-size:8.5px;font-weight:700}
+
+/* soft */
+.sfr{display:flex;align-items:center;gap:7px;margin:5px 0;font-size:10.5px;color:#cbd4e0}
+.sfd{width:5px;height:5px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#a855f7)}
+
+/* ── MAIN ── */
+.main{padding:40px 33px}
+.mt{font-size:12.5px;font-weight:700;color:#16162a;margin:20px 0 10px;padding-bottom:6px;border-bottom:2.5px solid #16162a;letter-spacing:.4px}
+.mt:first-child{margin-top:0}
+
+/* profile */
+.pf{font-size:11px;line-height:1.85;color:#555;text-align:justify}
+.pf .hl{background:linear-gradient(135deg,rgba(99,102,241,.07),rgba(168,85,247,.07));color:#6366f1;padding:1px 6px;border-radius:4px;font-weight:600}
+
+/* project */
+.pc{background:linear-gradient(135deg,#eeeefd,#f4eeff);border:1px solid rgba(99,102,241,.17);border-radius:10px;padding:14px 15px;margin:10px 0}
+.pc-h{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+.pc-n{font-size:12.5px;font-weight:600;color:#16162a}
+.pc-l{font-size:9px;color:#6366f1;font-weight:700;background:rgba(99,102,241,.1);padding:3px 9px;border-radius:12px}
+.pc-d{font-size:10.5px;color:#666;line-height:1.6}
+.pc-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px}
+.pc-tag{background:rgba(99,102,241,.08);color:#6366f1;font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px}
+
+/* timeline */
+.en{margin:14px 0;padding-left:16px;border-left:2px solid #e5e7eb;position:relative}
+.en::before{content:'';position:absolute;left:-5px;top:7px;width:10px;height:10px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#a855f7);border:2px solid #fff;box-shadow:0 0 0 2px #6366f1}
+.eh{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:4px}
+.et{font-size:12.5px;font-weight:600;color:#16162a}
+.ed{font-size:9.5px;color:#a855f7;font-weight:600;background:rgba(168,85,247,.08);padding:2px 8px;border-radius:12px}
+.ec{font-size:10.5px;color:#888;margin:2px 0 5px;font-weight:500}
+.el{list-style:none}
+.el li{font-size:10.5px;color:#555;padding:2px 0;padding-left:13px;position:relative;line-height:1.5}
+.el li::before{content:'›';position:absolute;left:0;color:#6366f1;font-weight:700;font-size:13px}
+.el li strong{color:#16162a;font-weight:600}
+
+/* gdpr */
+.gd{margin-top:24px;font-size:8.5px;color:#999;line-height:1.6;text-align:justify;padding-top:11px;border-top:1px solid #eee}
+.gd strong{color:#666}
+
+@media print{body{background:#fff}.wrap{box-shadow:none;margin:0;max-width:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- SIDEBAR -->
+<div class="side">
+<div class="hdr">
+    <div class="hdr-name">ADRIAN DMYTRYK</div>
+    <div class="hdr-badge">Junior DevOps Engineer</div>
+</div>
+
+<div class="ss">
+    <div class="ss-t">Contact</div>
+    <div class="cr"><div class="ci">📧</div><div><div class="cl">Email</div><div class="cv2">adrian.dmytryk@gmail.com</div></div></div>
+    <div class="cr"><div class="ci">📍</div><div><div class="cl">Location</div><div class="cv2">Warsaw, Poland</div></div></div>
+    <div class="cr"><div class="ci">📱</div><div><div class="cl">Phone</div><div class="cv2">+48 501 050 693</div></div></div>
+    <div class="cr"><div class="ci">🔗</div><div><div class="cl">LinkedIn</div><div class="cv2">linkedin.com/in/adrian-dmytryk-399915166</div></div></div>
+    <div class="cr"><div class="ci">💻</div><div><div class="cl">GitHub</div><div class="cv2">github.com/AdrDmy</div></div></div>
+</div>
+
+<div class="ss">
+    <div class="ss-t">Technical Skills</div>
+    <div class="sg"><div class="sg-h">Cloud Platforms</div><div class="sg-w"><span class="st">Azure (AKS)</span><span class="st">AWS (EKS)</span><span class="st">GCP (GKE)</span></div></div>
+    <div class="sg"><div class="sg-h">Containers & Orchestration</div><div class="sg-w"><span class="st">Docker</span><span class="st">Kubernetes</span><span class="st">K8s Networking</span><span class="st">Helm Charts</span><span class="st">Docker Compose</span></div></div>
+    <div class="sg"><div class="sg-h">Version Control & PM</div><div class="sg-w"><span class="st">GitHub Actions</span><span class="st">GitLab CI</span><span class="st">Bitbucket</span><span class="st">Jira</span></div></div>
+    <div class="sg"><div class="sg-h">CI/CD & IaC</div><div class="sg-w"><span class="st">Jenkins</span><span class="st">ArgoCD</span><span class="st">Terraform</span><span class="st">Ansible</span></div></div>
+    <div class="sg"><div class="sg-h">Monitoring</div><div class="sg-w"><span class="st">Prometheus</span><span class="st">Grafana</span><span class="st">ELK Stack</span></div></div>
+    <div class="sg"><div class="sg-h">Databases</div><div class="sg-w"><span class="st">PostgreSQL</span><span class="st">MongoDB</span></div></div>
+    <div class="sg"><div class="sg-h">Scripting & OS</div><div class="sg-w"><span class="st">Python</span><span class="st">Bash</span><span class="st">PowerShell</span><span class="st">Linux</span><span class="st">Win Server</span></div></div>
+</div>
+
+<div class="ss">
+    <div class="ss-t">Languages</div>
+    <div class="lr"><span class="ln">🇵🇱 Polish</span><span class="ll">NATIVE</span></div>
+    <div class="lr"><span class="ln">🇬🇧 English</span><span class="ll">PROFESSIONAL</span></div>
+</div>
+
+<div class="ss">
+    <div class="ss-t">Soft Skills</div>
+    <div class="sfr"><div class="sfd"></div>Team Collaboration</div>
+    <div class="sfr"><div class="sfd"></div>Fast Learning</div>
+    <div class="sfr"><div class="sfd"></div>Problem Solving</div>
+    <div class="sfr"><div class="sfd"></div>Multitasking</div>
+    <div class="sfr"><div class="sfd"></div>Communication</div>
+</div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+<div class="mt">Professional Profile</div>
+<p class="pf">
+    Passionate <span class="hl">Junior DevOps Engineer</span> with hands-on experience in cloud technologies and modern DevOps practices. Completed a comprehensive 1-year DevOps internship focusing on <span class="hl">AWS, Azure, GCP</span> and container orchestration with <span class="hl">Kubernetes</span>. Proven ability to implement <span class="hl">CI/CD pipelines</span> using GitHub Actions, Jenkins, and ArgoCD. Strong foundation in <span class="hl">Infrastructure as Code</span> with Terraform and configuration management with Ansible. Active member of Warsaw Windows Users Group, demonstrating commitment to continuous learning and IT community engagement.
+</p>
+
+<div class="mt">Projects</div>
+<div class="pc">
+    <div class="pc-h">
+        <div class="pc-n">💻 Adrian-CICD-Project</div>
+        <div class="pc-l">github.com/AdrDmy/Adrian-CICD-Project</div>
+    </div>
+    <div class="pc-d">Developed a complete cloud deployment platform for a telecommunications client. The solution provides a fully automated environment with the necessary tools for deploying applications to cloud infrastructure — emphasizing automation, security, and ease of use so that developers can deploy without extensive DevOps or CI/CD knowledge.</div>
+    <div class="pc-tags">
+        <span class="pc-tag">CI/CD</span>
+        <span class="pc-tag">Cloud Deployment</span>
+        <span class="pc-tag">Automation</span>
+        <span class="pc-tag">Security</span>
+        <span class="pc-tag">Telecom</span>
+    </div>
+</div>
+
+<div class="mt">Professional Experience</div>
+
+<div class="en">
+    <div class="eh"><div class="et">DevOps Intern</div><div class="ed">Jul 2023 – Jul 2024</div></div>
+    <div class="ec">CloudWarrior (Patryk Ciszewski), Warsaw</div>
+    <ul class="el">
+        <li>Designed and implemented <strong>CI/CD pipelines</strong> using GitHub Actions and Jenkins for automated testing and deployment</li>
+        <li>Managed <strong>multi-cloud infrastructure</strong> across AWS, Azure, and GCP with focus on Kubernetes clusters (AKS, EKS, GKE)</li>
+        <li>Developed <strong>Infrastructure as Code</strong> solutions using Terraform for consistent environment provisioning</li>
+        <li>Implemented <strong>containerization strategies</strong> using Docker with multi-stage builds and Docker Compose</li>
+        <li>Configured <strong>monitoring solutions</strong> with Prometheus and Grafana for application observability</li>
+        <li>Managed <strong>Kubernetes workloads</strong> including deployments, services, ingress, and Helm chart creation</li>
+        <li>Automated configuration management using <strong>Ansible playbooks</strong></li>
+        <li>Administered <strong>PostgreSQL and MongoDB</strong> databases with backup and recovery procedures</li>
+    </ul>
+</div>
+
+<div class="en">
+    <div class="eh"><div class="et">IT Specialist</div><div class="ed">May 2019 – Present</div></div>
+    <div class="ec">Lizard, Warsaw</div>
+    <ul class="el">
+        <li>Managing <strong>Microsoft 365</strong> infrastructure including user administration, security policies, and service configuration</li>
+        <li>Supporting <strong>cloud migration initiatives</strong> from on-premises environments to Microsoft 365 platform</li>
+        <li>Configuring and maintaining <strong>Microsoft Intune</strong> for mobile device management and endpoint security</li>
+        <li>Implementing <strong>SharePoint Online</strong> security measures and managing permissions across organizational sites</li>
+        <li>Maintaining <strong>Windows Server</strong> environments (2012, 2016) and basic Linux system administration</li>
+        <li>Administering <strong>network infrastructure</strong> including DNS, DHCP, and wireless networks</li>
+        <li>Providing technical support and troubleshooting for Windows-based systems and applications</li>
+    </ul>
+</div>
+
+<div class="mt">Education & Certifications</div>
+
+<div class="en">
+    <div class="eh"><div class="et">Bachelor of Engineering – Applied Computer Science</div><div class="ed">2015 – 2023</div></div>
+    <div class="ec">Wyższa Szkoła Informatyki Stosowanej i Zarządzania PAN w Warszawie</div>
+    <ul class="el">
+        <li>Specialized coursework in <strong>Azure Cloud Platform</strong> and <strong>System Administration</strong></li>
+        <li>Programming experience in Java, C#, C++, and Python</li>
+        <li>Database management and cryptography fundamentals</li>
+    </ul>
+</div>
+<div class="en">
+    <div class="eh"><div class="et">Kubernetes Maestro Course</div><div class="ed">Dec 2024 – Present</div></div>
+    <div class="ec">W Kontenerach (Damian Naprawa)</div>
+</div>
+<div class="en">
+    <div class="eh"><div class="et">DevOps Lifecycle Training</div><div class="ed">Jul 2023 – Jul 2024</div></div>
+    <div class="ec">CloudWarrior</div>
+</div>
+<div class="en">
+    <div class="eh"><div class="et">IT Internship</div><div class="ed">Apr 2014</div></div>
+    <div class="ec">Auchan Retail, Piaseczno</div>
+    <ul class="el">
+        <li>Learning related to <strong>Windows Server</strong> and Linux systems administration</li>
+        <li>Basics of network management</li>
+    </ul>
+</div>
+
+<div class="mt">Community Involvement</div>
+<div class="en">
+    <div class="eh"><div class="et">Co-organizer, ITechDay Conference</div><div class="ed">Sep 2018 – Feb 2021</div></div>
+    <div class="ec">Warsaw</div>
+    <ul class="el">
+        <li>Organized technology conferences for 300+ IT professionals</li>
+        <li>Coordinated speakers and technical content delivery</li>
+    </ul>
+</div>
+<div class="en">
+    <div class="eh"><div class="et">Active Member</div><div class="ed">Jan 2017 – Present</div></div>
+    <div class="ec">Warsaw Windows Users and Specialists Group (WGUiSW)</div>
+    <ul class="el">
+        <li>Regular participant in technical workshops and knowledge sharing sessions</li>
+    </ul>
+</div>
+
+<div class="gd">
+    <strong>Zgoda na przetwarzanie danych osobowych:</strong><br><br>
+    Wyrażam zgodę na przetwarzanie moich danych osobowych zawartych w niniejszym dokumencie dla potrzeb niezbędnych do realizacji procesu rekrutacji zgodnie z Ustawą z dnia 10 maja 2018 roku o ochronie danych osobowych (Dz. Ustaw z 2018, poz. 1000) oraz zgodnie z Rozporządzeniem Parlamentu Europejskiego i Rady (UE) 2016/679 z dnia 27 kwietnia 2016 r. w sprawie ochrony osób fizycznych w związku z przetwarzaniem danych osobowych i w sprawie swobodnego przepływu takich danych oraz uchylenia dyrektywy 95/46/WE (RODO).<br><br>
+    Jednocześnie wyrażam zgodę na przetwarzanie przez Pracodawcę moich danych osobowych na potrzeby przyszłych rekrutacji.
+</div>
+
+</div>
+</div>
+</body>
+</html>
