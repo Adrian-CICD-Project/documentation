@@ -256,8 +256,9 @@ Modifying configuration is done by:
 
 **Where secrets are stored:**
 
-- **GitHub Secrets** - for CI/CD pipeline (tokens, passwords, API keys)
-- **Kubernetes Secrets** - for running applications (available in AKS cluster)
+- **GitHub Secrets** — for CI/CD pipeline (tokens, passwords, API keys)
+- **Azure Key Vault** — for runtime secrets (GitHub App keys, credentials), delivered to clusters via External Secrets Operator
+- **Kubernetes Secrets** — created automatically by External Secrets Operator from Key Vault data
 
 **Usage in application:**
 

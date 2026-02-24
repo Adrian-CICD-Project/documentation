@@ -96,12 +96,13 @@ The **infra-azure** repository is responsible for creating all infrastructure re
 │   ├── aks
 │   │   ├── main.tf
 │   │   └── variables.tf
-│   ├── argocd
-│   │   ├── main.tf
-│   │   └── terraform.tf
 │   ├── auto-shutdown
 │   │   ├── main.tf
 │   │   └── variables.tf
+│   ├── key-vault
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   └── outputs.tf
 │   ├── network
 │   │   ├── main.tf
 │   │   └── variables.tf
@@ -111,8 +112,8 @@ The **infra-azure** repository is responsible for creating all infrastructure re
 ├── outputs.tf
 ├── providers.tf
 ├── README.md
-├── terraform.tfstate
-├── terraform.tfstate.backup
+├── docs/
+│   └── key-vault-external-secrets-setup.md
 ├── variables.tf
 └── versions.tf
 ```
@@ -135,8 +136,8 @@ The `./modules` folder contains independent infrastructure units:
 - **network** - VNET configuration, subnets, and security rules (NSG)
 - **acr (Azure Container Registry)** - Private registry for Docker images
 - **aks (Azure Kubernetes Service)** - Kubernetes cluster configuration (node pools, cluster version)
-- **auto-shutdown** - Cost-saving policy (e.g., shutting down machines at night)
-- **argocd** - Module installing GitOps tool inside the cluster
+- **auto-shutdown** - Azure Automation Runbook that stops AKS clusters daily at 22:00 CET (Central European Time) to reduce costs
+- **key-vault** - Azure Key Vault with RBAC authorization, role assignments for AKS kubelet identities (`Key Vault Secrets User`) and Terraform identity (`Key Vault Secrets Officer`). Used with External Secrets Operator to deliver secrets to Kubernetes
 
 ### Automation Scripts
 
@@ -153,7 +154,7 @@ Infrastructure deployment flow:
 1. Run `deploy.sh` script
 2. Script calls `main.tf`, loading data from `envs/test.tfvars`
 3. `main.tf` runs each module, passing variables
-4. Terraform saves state in `terraform.tfstate`
+4. Terraform manages state (state files are excluded from Git via `.gitignore`)
 
 **Outputs after deployment:**
 
@@ -171,6 +172,8 @@ After running `install-argocd.sh` script:
 
 **Summary:** At this point, complete infrastructure has been created along with ArgoCD exposed to the world with login credentials.
 
+> **Note:** ArgoCD is installed via `install-argocd.sh` script (not a Terraform module) to avoid Helm provider dependency cycles and ensure stable AKS connectivity.
+
 ---
 
 ## Platform-apps - GitOps and App-of-Apps
@@ -184,21 +187,28 @@ platform-apps/
 ├── bootstrap/
 │   ├── app-of-apps-prod.yaml
 │   ├── app-of-apps-test.yaml
+│   ├── argocd-repositories-github-app.yaml  # Template (secrets via External Secrets)
+│   ├── external-secrets-config.yaml          # ClusterSecretStore + ExternalSecret CRDs
 │   └── ingress-nginx.yaml
 ├── charts/
 │   └── app-of-apps/
 │       ├── templates/
 │       │   └── applications.yaml
-│       └── values.yaml
-├── deploy-platform.sh
-└── get-access-info.sh
+│       ├── values.yaml            # TEST environment values
+│       └── values-prod.yaml       # PROD environment values (separate config)
+├── scripts/
+│   ├── deploy-platform.sh
+│   └── get-access-info.sh
+└── manuals/
 ```
 
 ### Bootstrap Folder
 
 The `bootstrap/` folder contains Kubernetes manifests (Custom Resources) that instruct ArgoCD what to install initially:
 
-- **app-of-apps-prod.yaml / app-of-apps-test.yaml** - Application resource definitions pointing to `charts/app-of-apps` folder. Division into prod/test enables different application versions on different environments.
+- **app-of-apps-prod.yaml / app-of-apps-test.yaml** - Application resource definitions pointing to `charts/app-of-apps` folder. PROD uses `values-prod.yaml` for separate production configuration; TEST uses `values.yaml`.
+- **argocd-repositories-github-app.yaml** - Template for ArgoCD repository access secrets. Private keys are **not** stored in this file — they are delivered via External Secrets Operator from Azure Key Vault.
+- **external-secrets-config.yaml** - Defines `ClusterSecretStore` (connected to Azure Key Vault via Managed Identity) and `ExternalSecret` CRDs that automatically create Kubernetes Secrets for ArgoCD repository access.
 - **ingress-nginx.yaml** - Manifest installing Ingress Controller, which enables exposing DependencyTrack externally (solves 405 error).
 
 ### Charts/app-of-apps Folder
@@ -206,11 +216,12 @@ The `bootstrap/` folder contains Kubernetes manifests (Custom Resources) that in
 This is a local Helm Chart serving as infrastructure "table of contents":
 
 - **templates/applications.yaml** - Most important file in the repository. Contains a loop that, based on the list in `values.yaml`, generates subsequent `Application` objects for ArgoCD (Prometheus, backend application, database, etc.).
-- **values.yaml** - List of all applications that ArgoCD should track, along with Git repository addresses.
+- **values.yaml** - List of all applications that ArgoCD should track, along with Git repository addresses. Includes External Secrets Operator configuration.
+- **values-prod.yaml** - Production-specific overrides (separate retention policies, persistence settings, environment-prod scraping, ESO enabled).
 
 ### Automation Scripts
 
-- **deploy-platform.sh** - Responsible for deploying entire bootstrap for test and prod environments with Ingress error fixes
+- **deploy-platform.sh** - Responsible for deploying entire bootstrap for test and prod environments, including External Secrets Operator configuration and Ingress error fixes
 - **get-access-info.sh** - Displays access data (ArgoCD admin password, application URLs)
 
 Detailed process and operation description in: `Platform-apps/manuals/Deploy-platform.md`
@@ -238,7 +249,7 @@ After running the script, the stack being created in ArgoCD:
 SonarQube configuration process:
 
 1. Get application IP address and login to UI with: `admin / admin`
-2. Change default password according to requirements
+2. **Immediately change default password** — default credentials are a security risk
 3. Generate API key:
    - Path: `Administration` -> `Access Management` -> `Teams` -> `Administrators` -> `Generate New API Key`
 4. Copy API key for later use in CI
@@ -248,7 +259,7 @@ SonarQube configuration process:
 DependencyTrack configuration process:
 
 1. Get application IP address and login to UI with: `admin / admin`
-2. Change default password according to requirements
+2. **Immediately change default password** — default credentials are a security risk
 3. Generate API key:
    - Path: Profile -> `My Account` -> `Security` -> enter token name -> `Generate`
 4. Copy API key for later use
@@ -430,9 +441,12 @@ GitHub Actions agent goes through entire process and creates commit on `infrastr
 Repository contains **DEV** environment configuration:
 
 - `values/adrian-java-app/values.yaml` - Helm/Kustomize values for DEV
-- `k8s/adrian-java-app/` - Application manifests (Deployment, Service)
+- `k8s/adrian-java-app/` - Application manifests (Deployment, Service) with hardened `securityContext`
+- `k8s/devops-project/` - Kubernetes manifests for devops-project with hardened `securityContext`
 - `deploy-argo-dev.sh` - Runs application in ArgoCD on test environment
 - Workflow calling `ci-cd-templates/promote-environment.yml`
+
+> **Security:** All deployments include hardened `securityContext` (runAsNonRoot, readOnlyRootFilesystem, drop ALL capabilities).
 
 ### GitOps Process
 
@@ -471,7 +485,8 @@ Workflow `promote-to-test` (calls centralized template):
 Repository contains declarative **TEST** environment configuration:
 
 - `values/adrian-java-app/values.yaml` - Application values for TEST
-- `k8s/adrian-java-app/` - Kubernetes manifests for TEST
+- `k8s/adrian-java-app/` - Kubernetes manifests for TEST with hardened `securityContext`
+- `k8s/devops-project/` - Kubernetes manifests for devops-project with hardened `securityContext`
 - Workflow calling `ci-cd-templates/promote-environment.yml`
 
 ### GitOps Process
@@ -510,7 +525,8 @@ Workflow `promote-to-prod` (calls centralized template):
 Repository contains production environment configuration:
 
 - `values/adrian-java-app/values.yaml`
-- `k8s/adrian-java-app/`
+- `k8s/adrian-java-app/` - with hardened `securityContext`
+- `k8s/devops-project/` - with hardened `securityContext`
 - Manifest validation (syntactic check via `ci-cd-templates/validate-manifests.yml`)
 - Final stage of promotion chain
 
@@ -662,6 +678,32 @@ All documentation is located in the **Documentation** repository and is divided 
 [Developer-Guide.md](https://github.com/Adrian-CICD-Project/Documentation/blob/main/Developer-Guide.md)
 
 ![](media/image3.png)
+
+---
+
+## Secrets Management
+
+Secrets are **never** stored in Git repositories. The project uses the following approach:
+
+| Layer | Tool | Purpose |
+|-------|------|---------|
+| Storage | **Azure Key Vault** | Central secret store (GitHub App keys, tokens, credentials) |
+| Delivery | **External Secrets Operator (ESO)** | Pulls secrets from Key Vault into Kubernetes |
+| CI/CD | **GitHub Secrets** | Pipeline tokens (SONAR_TOKEN, ACR credentials, PAT) |
+| Runtime | **Kubernetes Secrets** | Created automatically by ESO from Key Vault data |
+
+**Flow:** Azure Key Vault → External Secrets Operator → Kubernetes Secrets → ArgoCD / Application pods
+
+> **Setup guide:** [infra-azure/docs/key-vault-external-secrets-setup.md](https://github.com/Adrian-CICD-Project/infra-azure/blob/main/docs/key-vault-external-secrets-setup.md)
+
+### Security Hardening Applied
+
+- All CI workflows sanitized — no secrets logged in pipeline output
+- All deployment manifests include `securityContext` (runAsNonRoot, readOnlyRootFilesystem, drop ALL capabilities)
+- Terraform state files excluded from Git (`.gitignore`)
+- RSA private keys removed from repository files — delivered via External Secrets
+- PROD environment uses separate `values-prod.yaml` configuration
+- Git history cleaned of sensitive data (BFG Repo-Cleaner)
 
 ---
 

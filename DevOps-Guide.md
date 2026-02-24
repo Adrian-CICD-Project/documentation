@@ -61,8 +61,14 @@ Provisioning: Terraform, module `aks`.
 - Images from CI pushed directly to ACR
 
 ### 3.3 Auto-shutdown
-- Requirement: shutdown at 18:00 daily
-- Implementation: Automation Account or Terraform schedule
+- Schedule: daily at **22:00 Central European Time**
+- Implementation: Azure Automation Account + PowerShell Runbook (`Connect-AzAccount -Identity` + `Stop-AzAksCluster`)
+- Configured via Terraform module `auto-shutdown`
+
+### 3.4 Azure Key Vault
+- Stores sensitive data: GitHub App keys, tokens, credentials
+- AKS clusters access via Managed Identity (RBAC role: `Key Vault Secrets User`)
+- Provisioned via Terraform module `key-vault`
 
 ---
 
@@ -72,9 +78,11 @@ Provisioning: Terraform, module `aks`.
 - ArgoCD installation via Terraform or Helm provider in namespace `argocd`
 
 ### 4.2 App-of-apps
-- Main file: `platform-apps/app-of-apps.yaml`
+- Bootstrap files: `platform-apps/bootstrap/app-of-apps-test.yaml` (TEST), `app-of-apps-prod.yaml` (PROD)
+- PROD uses separate `values-prod.yaml` with production-appropriate settings
 - Manages:
-  - Platform apps (SonarQube, Dependency-Track, Prometheus, Grafana)
+  - Platform apps (SonarQube, Dependency-Track, Prometheus, Alertmanager)
+  - External Secrets Operator
   - Environment applications
 
 ### 4.3 Environment Promotion
@@ -125,19 +133,30 @@ Each environment repo contains:
 ## 6. Secrets and Security
 
 ### 6.1 General Principles
-- Secrets never go into Git
-- Allowed locations: GitHub Secrets, Kubernetes Secrets
+- Secrets **never** go into Git (enforced by `.gitignore` and code review)
+- CI workflows do not log secrets or tokens to output
+- All deployments run with hardened `securityContext` (runAsNonRoot, readOnlyRootFilesystem, drop ALL capabilities)
 
-### 6.2 GitHub Secrets (examples)
+### 6.2 Secret Storage Locations
+
+| Type | Storage | Purpose |
+|------|---------|---------|
+| CI/CD tokens | GitHub Secrets | Pipeline authentication (Azure, SonarQube, DTrack) |
+| Runtime secrets | Azure Key Vault | GitHub App keys, application credentials |
+| K8s delivery | External Secrets Operator | Pulls from Key Vault → creates K8s Secrets |
+
+### 6.3 GitHub Secrets (CI/CD)
 - `AZURE_CREDENTIALS`, `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`
 - `SONAR_TOKEN`, `SONAR_HOST_URL`
 - `DEPENDENCY_TRACK_API_KEY`, `DTRACK_API_URL`
 - `ACR_NAME`
 - `ENV_REPOS_TOKEN`
 
-### 6.3 Kubernetes Secrets
-- Store application data
-- Injected via Helm or created manually by DevOps
+### 6.4 Azure Key Vault (Runtime)
+- GitHub App credentials (private key, app ID, installation ID)
+- Delivered to AKS via External Secrets Operator
+- AKS access through Managed Identity (no passwords in code)
+- Setup guide: `infra-azure/docs/key-vault-external-secrets-setup.md`
 
 ---
 
@@ -183,6 +202,8 @@ Implementation:
 | K8s Tools | kubectl | CLI | - |
 | K8s Tools | Helm | Chart management | - |
 | Security | Trivy | Image scanning | - |
+| Secrets | Azure Key Vault | Centralized secret storage | - |
+| Secrets | External Secrets Operator | K8s secret delivery from Key Vault | 0.12.1 |
 
 ---
 
