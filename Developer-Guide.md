@@ -113,7 +113,9 @@ The pipeline generates a Software Bill of Materials (SBOM) to track dependencies
         </execution>
     </executions>
 </plugin>
+```
 
+---
 
 ### Main Endpoints
 
