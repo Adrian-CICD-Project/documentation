@@ -21,7 +21,7 @@ This document describes in one place:
 ```
 GitHub Organization
 |
-├── infrastructure                # Terraform: AKS, ACR, network, ArgoCD
+├── infra-azure                   # Terraform: AKS, ACR, network, ArgoCD
 |   ├── modules/
 |   └── envs/
 |
@@ -38,9 +38,9 @@ GitHub Organization
 ├── platform-apps                 # ArgoCD apps + Helm charts (SonarQube, DT, Prometheus)
 |   └── app-of-apps.yaml
 |
-├── devops-project                # Spring Boot application + CI trigger
+├── adrian-java-app               # Spring Boot application + CI trigger
 |
-└── Documentation                 # This documentation
+└── documentation                 # This documentation
 ```
 
 ---
@@ -107,7 +107,7 @@ All CI/CD logic is maintained in the **ci-cd-templates** repository:
 
 Application repositories only contain trigger configuration and call these centralized templates.
 
-### 5.2 CI (repo `devops-project`)
+### 5.2 CI (repo `adrian-java-app`)
 
 The CI workflow calls `ci-cd-templates/java-ci-full.yml` which executes:
 
@@ -210,7 +210,7 @@ Implementation:
 ## 9. Operational Procedures
 
 ### 9.1 New Environment
-1. Add folder in `infrastructure/envs`
+1. Add folder in `infra-azure/envs`
 2. Enable modules: network, AKS, ACR, ArgoCD
 3. Run Terraform
 4. Create repository `infrastructure-env-<name>`

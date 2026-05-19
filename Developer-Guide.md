@@ -4,7 +4,7 @@
 
 This document describes how developers can:
 
-- Work with the `devops-project` application (Spring Boot)
+- Work with the `adrian-java-app` application (Spring Boot)
 - Run the application locally
 - Create and test changes
 - Trigger the CI pipeline
@@ -21,14 +21,14 @@ Main repositories in the organization:
 
 | Repository | Purpose |
 |------------|---------|
-| **devops-project** | Application code, tests, CI pipeline trigger |
+| **adrian-java-app** | Application code, tests, CI pipeline trigger |
 | **ci-cd-templates** | Centralized reusable CI/CD workflow templates |
 | **platform-apps** | Helm charts for SonarQube, Dependency-Track, Prometheus, Grafana |
 | **infrastructure-env-dev / test / prod** | GitOps repositories for each environment |
-| **infrastructure** | Terraform for infrastructure (AKS, ACR, network, ArgoCD) |
-| **Documentation** | Technical documentation (what you're reading now) |
+| **infra-azure** | Terraform for infrastructure (AKS, ACR, network, ArgoCD) |
+| **documentation** | Technical documentation (what you're reading now) |
 
-As a developer, you primarily work with the **devops-project** repository.
+As a developer, you primarily work with the **adrian-java-app** repository.
 
 > **Note:** CI/CD pipeline logic is maintained centrally in `ci-cd-templates`. Application repositories only contain trigger configuration and variables.
 
@@ -47,8 +47,8 @@ To run the project locally, you need:
 ### Cloning the Repository
 
 ```bash
-git clone https://github.com/<org>/devops-project.git
-cd devops-project
+git clone https://github.com/<org>/adrian-java-app.git
+cd adrian-java-app
 ```
 
 ---
@@ -56,7 +56,7 @@ cd devops-project
 ## 4. Project Structure
 
 ```
-devops-project
+adrian-java-app
 ├── src/main/java           # application logic
 ├── src/test/java           # unit tests
 ├── pom.xml                 # Maven configuration, SBOM, Sonar
@@ -176,7 +176,7 @@ After pushing changes to GitHub and creating a Pull Request, the pipeline execut
 
 > You do not deploy anything manually.
 
-> **Note:** All pipeline logic is defined in [ci-cd-templates](https://github.com/Adrian-CICD-Project/ci-cd-templates). The workflow file in `devops-project` only triggers these centralized templates.
+> **Note:** All pipeline logic is defined in [ci-cd-templates](https://github.com/Adrian-CICD-Project/ci-cd-templates). The workflow file in `adrian-java-app` only triggers these centralized templates.
 
 ---
 

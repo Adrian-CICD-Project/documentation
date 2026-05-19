@@ -26,7 +26,7 @@
   - [5.1. Repository Structure](#repository-structure)
   - [5.2. Available Templates](#available-templates)
   - [5.3. Usage Pattern](#usage-pattern)
-- [6. Devops-project - Application and CI Pipeline](#adrian-java-app-application-and-ci-pipeline)
+- [6. Adrian-java-app - Application and CI Pipeline](#adrian-java-app-application-and-ci-pipeline)
   - [6.1. CI Pipeline Scope](#ci-pipeline-scope)
   - [6.2. Execution Stages](#execution-stages)
   - [6.3. CI/CD Flow](#cicd-flow)
@@ -331,7 +331,7 @@ jobs:
 
 ---
 
-## Devops-project - Application and CI Pipeline
+## Adrian-java-app - Application and CI Pipeline
 
 The **adrian-java-app** repository contains Java Spring Boot application code with CI pipeline trigger that calls centralized templates.
 
@@ -672,10 +672,10 @@ Check inbox: `adrian.dmytryk@gmail.com` (Inbox and SPAM)
 All documentation is located in the **Documentation** repository and is divided into:
 
 ### a) Documentation for DevOps / Architect
-[DevOps-Guide.md](https://github.com/Adrian-CICD-Project/Documentation/blob/main/DevOps-Guide.md)
+[DevOps-Guide.md](https://github.com/Adrian-CICD-Project/documentation/blob/main/DevOps-Guide.md)
 
 ### b) Documentation for Developer
-[Developer-Guide.md](https://github.com/Adrian-CICD-Project/Documentation/blob/main/Developer-Guide.md)
+[Developer-Guide.md](https://github.com/Adrian-CICD-Project/documentation/blob/main/Developer-Guide.md)
 
 ![](media/image3.png)
 
