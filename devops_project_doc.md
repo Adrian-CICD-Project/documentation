@@ -136,7 +136,7 @@ The `./modules` folder contains independent infrastructure units:
 - **network** - VNET configuration, subnets, and security rules (NSG)
 - **acr (Azure Container Registry)** - Private registry for Docker images
 - **aks (Azure Kubernetes Service)** - Kubernetes cluster configuration (node pools, cluster version)
-- **auto-shutdown** - Azure Automation Runbook that stops AKS clusters daily at 22:00 CET (Central European Time) to reduce costs
+- **auto-shutdown** - Azure Automation Runbook that stops AKS clusters daily at 18:00 CET (Central European Time) to reduce costs
 - **key-vault** - Azure Key Vault with RBAC authorization, role assignments for AKS kubelet identities (`Key Vault Secrets User`) and Terraform identity (`Key Vault Secrets Officer`). Used with External Secrets Operator to deliver secrets to Kubernetes
 
 ### Automation Scripts

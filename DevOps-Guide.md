@@ -61,7 +61,7 @@ Provisioning: Terraform, module `aks`.
 - Images from CI pushed directly to ACR
 
 ### 3.3 Auto-shutdown
-- Schedule: daily at **22:00 Central European Time**
+- Schedule: daily at **18:00 Central European Time**
 - Implementation: Azure Automation Account + PowerShell Runbook (`Connect-AzAccount -Identity` + `Stop-AzAksCluster`)
 - Configured via Terraform module `auto-shutdown`
 
