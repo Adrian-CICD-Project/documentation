@@ -51,6 +51,7 @@
   - [10.3. Verification Checklist](#verification-checklist)
   - [10.4. Monitoring Results](#monitoring-results)
 - [11. Project Documentation](#project-documentation)
+- [12. Multi-Cloud Infrastructure (AWS & GCP)](#multi-cloud-infrastructure-aws--gcp)
 
 ---
 
@@ -711,7 +712,9 @@ Secrets are **never** stored in Git repositories. The project uses the following
 
 | Repository | Purpose |
 |------------|---------|
-| **infra-azure** | Infrastructure as Code (Terraform) |
+| **infra-azure** | Infrastructure as Code (Terraform) – Azure |
+| **infra-aws** | Infrastructure as Code (Terraform) – AWS (EKS/ECR) |
+| **infra-gcp** | Infrastructure as Code (Terraform) – GCP (GKE/Artifact Registry) |
 | **platform-apps** | GitOps, App-of-Apps, platform tools |
 | **ci-cd-templates** | Centralized CI/CD workflow templates |
 | **adrian-java-app** | Java Spring Boot Application + CI trigger |
@@ -719,6 +722,26 @@ Secrets are **never** stored in Git repositories. The project uses the following
 | **infrastructure-env-test** | ArgoCD configuration for TEST environment |
 | **infrastructure-env-prod** | ArgoCD configuration for PROD environment |
 | **Documentation** | Project documentation |
+
+---
+
+## Multi-Cloud Infrastructure (AWS & GCP)
+
+The Azure infrastructure was mirrored to **AWS** (`infra-aws`) and **GCP** (`infra-gcp`) to provide
+a cost-optimized, multi-cloud parity of the platform: two Kubernetes clusters (`test` + `prod`),
+an image registry, network, secret store, and a daily auto-shutdown at 18:00.
+
+| Role | Azure | AWS | GCP |
+|------|-------|-----|-----|
+| Kubernetes | AKS | EKS | GKE (zonal) |
+| Worker nodes | VM `Standard_B4ms` | **EC2** `t3.large` | **Compute Engine** `e2-standard-2` |
+| Image registry | ACR | ECR | Artifact Registry |
+| Network | VNet | VPC + NAT | VPC + Cloud NAT |
+| Secrets | Key Vault | Secrets Manager | Secret Manager |
+| Auto-shutdown 18:00 | Automation Account | EventBridge + Lambda | Cloud Scheduler + GKE API |
+
+Full breakdown of every component and the FinOps cost-saving strategy is documented in
+[`multicloud-infrastructure.md`](multicloud-infrastructure.md).
 
 ---
 

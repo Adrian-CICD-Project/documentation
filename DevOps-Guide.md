@@ -9,6 +9,7 @@ Practical reference for DevOps / Platform Engineers.
 This document describes in one place:
 - Repository and environment architecture
 - Azure infrastructure (AKS, ACR, auto-shutdown)
+- Multi-cloud infrastructure on AWS and GCP (EKS/GKE) – see `multicloud-infrastructure.md`
 - GitOps with ArgoCD
 - CI/CD process with centralized templates
 - Security and secrets management
@@ -24,6 +25,10 @@ GitHub Organization
 ├── infra-azure                   # Terraform: AKS, ACR, network, ArgoCD
 |   ├── modules/
 |   └── envs/
+|
+├── infra-aws                     # Terraform: EKS, ECR, VPC, Secrets, auto-shutdown
+├── infra-gcp                     # Terraform: GKE, Artifact Registry, VPC, Secret Manager
+|                                 # (multi-cloud – patrz multicloud-infrastructure.md)
 |
 ├── ci-cd-templates               # Centralized reusable workflow templates
 |   └── .github/workflows/
