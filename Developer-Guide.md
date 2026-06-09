@@ -167,10 +167,14 @@ After pushing changes to GitHub and creating a Pull Request, the pipeline execut
 2. Run unit tests + generate reports
 3. SonarQube analysis (all branches)
 4. Generate SBOM and send to Dependency-Track
-5. Build Docker image + push to Azure Container Registry (ACR)
-6. Scan image for vulnerabilities
-7. Create GitHub Release (with reports)
+5. Build Docker image; push to Azure Container Registry (ACR) **only from `main`**
+6. Scan image for vulnerabilities (Trivy) — fixable **CRITICAL** vulnerabilities block the pipeline
+7. Create GitHub Release with attached reports: SBOM, Dependency-Track findings,
+   Trivy report and unit test results (`junit-test-results.zip`)
 8. Update `environment-dev` repository with new image tag
+
+Additionally, every push/PR runs a **gitleaks** secret scan, and **Dependabot**
+opens weekly PRs with Maven / GitHub Actions / Docker dependency updates.
 
 **ArgoCD detects the change and deploys to AKS automatically.**
 
@@ -232,6 +236,10 @@ environment-dev -> environment-test -> environment-prod
 4. ArgoCD automatically deploys to production environment
 
 > The only manual step is clicking **Merge** in GitHub.
+
+On **PROD**, `adrian-java-app` is rolled out as a **canary** (Argo Rollouts):
+50% of pods get the new version first, after a 60s pause the rollout completes.
+This happens automatically — no developer action needed.
 
 > **Note:** Promotion workflow logic is defined in [ci-cd-templates/promote-environment.yml](https://github.com/Adrian-CICD-Project/ci-cd-templates/blob/main/.github/workflows/promote-environment.yml)
 

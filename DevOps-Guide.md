@@ -31,10 +31,14 @@ GitHub Organization
 |                                 # (multi-cloud – patrz multicloud-infrastructure.md)
 |
 ├── ci-cd-templates               # Centralized reusable workflow templates
-|   └── .github/workflows/
-|       ├── java-ci-full.yml      # Full CI pipeline for Java apps
-|       ├── promote-environment.yml # Environment promotion
-|       └── validate-manifests.yml  # K8s manifest validation
+|   ├── .github/workflows/
+|   |   ├── java-ci-full.yml      # Full CI pipeline for Java apps
+|   |   ├── promote-environment.yml # Environment promotion
+|   |   ├── validate-manifests.yml  # K8s manifest validation
+|   |   ├── gitleaks.yml          # Secret scanning (full git history)
+|   |   └── terraform-ci.yml      # Terraform fmt/validate + Checkov
+|   └── scripts/
+|       └── setup-branch-protection.sh # One-time branch protection setup (gh CLI)
 |
 ├── infrastructure-env-dev        # GitOps environment-dev
 ├── infrastructure-env-test       # GitOps environment-test
@@ -86,7 +90,8 @@ Provisioning: Terraform, module `aks`.
 - Bootstrap files: `platform-apps/bootstrap/app-of-apps-test.yaml` (TEST), `app-of-apps-prod.yaml` (PROD)
 - PROD uses separate `values-prod.yaml` with production-appropriate settings
 - Manages:
-  - Platform apps (SonarQube, Dependency-Track, Prometheus, Alertmanager)
+  - Platform apps (SonarQube, Dependency-Track, Prometheus, Alertmanager, Grafana)
+  - Argo Rollouts controller (PROD cluster only)
   - External Secrets Operator
   - Environment applications
 
@@ -95,6 +100,18 @@ Provisioning: Terraform, module `aks`.
 - CI in application repo updates only `environment-dev`
 - Promotion to test/prod: merge PR between GitOps repositories
 - Only manual step: **Merge PR**
+
+### 4.4 Canary Deployments on PROD (Argo Rollouts)
+- `adrian-java-app` on PROD is deployed as an Argo Rollouts `Rollout` (canary strategy):
+  **50% traffic → 60s pause → full rollout**
+- The Rollout manifest intentionally keeps the filename `deployment.yaml`
+  (`infrastructure-env-prod/k8s/adrian-java-app/deployment.yaml`) so promotion
+  workflows can still rewrite the `image:` line by file path
+- Scaling and availability: HPA (2–4 replicas, CPU 80%) + PodDisruptionBudget (`minAvailable: 1`)
+- Watch a rollout:
+  ```bash
+  kubectl argo rollouts get rollout adrian-java-app -n environment-prod --watch
+  ```
 
 ---
 
@@ -109,6 +126,8 @@ All CI/CD logic is maintained in the **ci-cd-templates** repository:
 | `java-ci-full.yml` | Complete CI pipeline for Java Spring Boot apps |
 | `promote-environment.yml` | Promote app between environments (dev->test, test->prod) |
 | `validate-manifests.yml` | Validate Kubernetes manifest YAML syntax |
+| `gitleaks.yml` | Secret scanning over full git history (wired into all repos) |
+| `terraform-ci.yml` | Terraform `fmt -check` + `validate` + Checkov scan (infra repos) |
 
 Application repositories only contain trigger configuration and call these centralized templates.
 
@@ -119,10 +138,11 @@ The CI workflow calls `ci-cd-templates/java-ci-full.yml` which executes:
 1. Maven build
 2. Tests + coverage
 3. SonarQube analysis
-4. SBOM generation + send to Dependency-Track
-5. Docker image build and push to ACR
-6. Image vulnerability scan
-7. GitHub Release creation
+4. SBOM generation + send to Dependency-Track (findings exported back as report)
+5. Docker image build; push to ACR **only from `main`** (feature branches build-only)
+6. Image vulnerability scan (Trivy) — **pipeline fails on fixable CRITICAL vulnerabilities**
+7. GitHub Release creation with assets: SBOM (`bom.json`), Dependency-Track findings
+   (`dtrack-findings.json`), Trivy report, JUnit results (`junit-test-results.zip`)
 8. Update `infrastructure-env-dev` repository
 
 ### 5.3 CD (repositories `infrastructure-env-*`)
@@ -138,9 +158,12 @@ Each environment repo contains:
 ## 6. Secrets and Security
 
 ### 6.1 General Principles
-- Secrets **never** go into Git (enforced by `.gitignore` and code review)
+- Secrets **never** go into Git (enforced by `.gitignore`, code review and **gitleaks** secret scanning in CI on every push/PR)
 - CI workflows do not log secrets or tokens to output
 - All deployments run with hardened `securityContext` (runAsNonRoot, readOnlyRootFilesystem, drop ALL capabilities)
+- All deployments define startup/readiness/liveness probes against Spring Actuator
+- **Dependabot** keeps Maven, GitHub Actions, Docker and Terraform dependencies updated (weekly PRs)
+- **Branch protection** on `main` in all repos (merge via PR only, no force-push) — one-time setup via `ci-cd-templates/scripts/setup-branch-protection.sh`; **CODEOWNERS** in every repo
 
 ### 6.2 Secret Storage Locations
 
@@ -168,12 +191,20 @@ Each environment repo contains:
 ## 7. Monitoring and Alerting
 
 ### 7.1 Monitoring Stack
-- In test cluster: Prometheus, Alertmanager, Grafana
-- Version: kube-prometheus-stack (SLIM)
+- In test cluster: Prometheus, Alertmanager, Grafana (separate Helm charts, SLIM profile)
+- Installed via ArgoCD app-of-apps (`platform-apps/charts/app-of-apps/values.yaml`)
 
 ### 7.2 What We Monitor
 - Spring Boot metrics (Actuator), HTTP requests, 4xx/5xx errors
-- Grafana: ready-made dashboards
+- Grafana: dashboards auto-provisioned from grafana.com — **JVM Micrometer (ID 4701)**
+  and **Spring Boot Statistics (ID 11378)**, Prometheus datasource preconfigured
+
+**Grafana access** (namespace `monitoring`, service type LoadBalancer):
+```bash
+kubectl get svc grafana -n monitoring        # external IP
+# login: admin, password:
+kubectl get secret grafana -n monitoring -o jsonpath="{.data.admin-password}" | base64 -d
+```
 
 ### 7.3 Alert: HTTP 500 -> email
 Requirement: send email on HTTP 500.
@@ -192,21 +223,25 @@ Implementation:
 | Cloud | Azure | Cloud environment | - |
 | Kubernetes | AKS | K8s cluster | - |
 | Registry | ACR | Image registry | - |
-| IaC | Terraform | Infrastructure as code | - |
-| IaC | AzureRM Provider | Terraform provider | - |
+| IaC | Terraform | Infrastructure as code | 1.9.x |
+| IaC | AzureRM Provider | Terraform provider | ~> 3.0 |
+| IaC Security | Checkov | Terraform static security scan (CI) | latest (action v12) |
 | CI/CD | GitHub Actions | CI/CD pipeline | - |
 | CI/CD | ci-cd-templates | Centralized workflow templates | - |
+| CI/CD | Dependabot | Automated dependency update PRs | - |
 | App Runtime | Java 21 | Application runtime | 21 |
-| Build Tool | Maven | Application build | - |
-| Framework | Spring Boot | Application backend | - |
-| Code Quality | SonarQube | Static analysis | - |
-| Security | Dependency-Track | Dependency analysis | - |
-| Observability | Prometheus | Metrics | - |
-| Observability | Alertmanager | Alert routing | - |
-| Observability | Grafana | Dashboards | - |
+| Build Tool | Maven | Application build | 3.9+ |
+| Framework | Spring Boot | Application backend | 3.4.3 |
+| Code Quality | SonarQube | Static analysis | chart 2025.5.0 |
+| Security | Dependency-Track | Dependency analysis (SBOM) | chart 0.40.0 |
+| Security | Trivy | Image scanning + CRITICAL gate | action 0.28.0 |
+| Security | gitleaks | Secret scanning in CI (full git history) | 8.21.2 |
+| Observability | Prometheus | Metrics | chart 25.30.0 |
+| Observability | Alertmanager | Alert routing (email on HTTP 500) | chart 1.13.1 |
+| Observability | Grafana | Dashboards (JVM, Spring Boot) | chart 8.8.2 |
+| Deployment | Argo Rollouts | Canary deployments on PROD | chart 2.38.0 |
 | K8s Tools | kubectl | CLI | - |
-| K8s Tools | Helm | Chart management | - |
-| Security | Trivy | Image scanning | - |
+| K8s Tools | Helm | Chart management | 3.x |
 | Secrets | Azure Key Vault | Centralized secret storage | - |
 | Secrets | External Secrets Operator | K8s secret delivery from Key Vault | 0.12.1 |
 
