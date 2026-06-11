@@ -196,6 +196,8 @@ Each environment repo contains:
 
 ### 7.2 What We Monitor
 - Spring Boot metrics (Actuator), HTTP requests, 4xx/5xx errors
+- Custom application metrics (Coffee Shop API): `coffee_orders_total{status,item}`,
+  `coffee_brew_duration_seconds`, `coffee_inventory_level{ingredient}`, `coffee_machine_status`
 - Grafana: dashboards auto-provisioned from grafana.com — **JVM Micrometer (ID 4701)**
   and **Spring Boot Statistics (ID 11378)**, Prometheus datasource preconfigured
 
@@ -212,7 +214,9 @@ Requirement: send email on HTTP 500.
 Implementation:
 1. Alert rule in Prometheus, e.g., `increase(http_server_requests_seconds_count{status="500"}[5m]) > 1`  
 2. Alertmanager route: email type, SMTP from K8s secret  
-3. Test: call endpoint `/api/error500`
+3. Test: call endpoint `/api/error500`, or use the coffee-shop failure path:
+   `POST /api/chaos/machine/break` and then `POST /api/orders?itemId=latte`
+   (real exception with stack trace; also increments `coffee_orders_total{status="failed_machine"}`)
 
 ---
 

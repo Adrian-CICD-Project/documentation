@@ -626,6 +626,19 @@ while true; do
 done
 ```
 
+Alternative (Coffee Shop API): break the coffee machine so every order returns 500
+with a real exception stack trace:
+
+```bash
+curl -s -X POST http://localhost:8080/api/chaos/machine/break
+while true; do
+  curl -s -X POST "http://localhost:8080/api/orders?itemId=latte" > /dev/null
+  echo "Sent failing order: $(date)"
+  sleep 2
+done
+# afterwards: curl -s -X POST http://localhost:8080/api/chaos/machine/repair
+```
+
 ### Verification Checklist
 
 #### Application Metrics

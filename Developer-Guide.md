@@ -119,6 +119,32 @@ The pipeline generates a Software Bill of Materials (SBOM) to track dependencies
 
 ### Main Endpoints
 
+The application is a **Coffee Shop API** that deliberately produces errors for monitoring demos.
+
+**Business endpoints:**
+
+- `GET /api/menu` - list of coffees; `GET /api/menu/{id}` - single item (404 if unknown)
+- `POST /api/orders?itemId=latte` - place an order (201); returns **409** when an ingredient
+  runs out and **500** (`CoffeeMachineException` with a real stack trace) when the machine is broken
+- `GET /api/orders` - placed orders, `GET /api/inventory` - stock levels
+- `POST /api/inventory/restock` - reset stock to defaults
+
+**Chaos endpoints** (all bounded by `coffee.chaos.*` limits in `application.properties`;
+disabled entirely with `coffee.chaos.enabled=false` → 403):
+
+- `GET /api/chaos/slow-brew?delayMs=3000` - artificial latency (cap 10 s) for p95/p99 histograms
+- `POST /api/chaos/machine/break` / `repair` - all orders fail with 500
+- `POST /api/chaos/health/readiness/fail` / `recover` - readiness probe goes DOWN (pod NotReady)
+- `POST /api/chaos/health/liveness/fail` - liveness probe goes DOWN (kubelet restarts the pod)
+- `POST /api/chaos/memory?mb=50` / `POST /api/chaos/memory/release` - retained allocation, cap 200 MB (OOMKill demo)
+- `POST /api/chaos/cpu?seconds=30&threads=2` - CPU burn, cap 60 s / 4 threads (HPA demo)
+- `GET /api/chaos/status` - current state of all toggles
+
+**Custom Prometheus metrics** (at `/actuator/prometheus`): `coffee_orders_total{status,item}`,
+`coffee_brew_duration_seconds`, `coffee_inventory_level{ingredient}`, `coffee_machine_status`.
+
+**Legacy endpoints** (kept for backward compatibility and alert testing):
+
 - `GET /api/hello` - returns "Hello World"
 - `GET /api/error500` - returns HTTP 500 error (for alert testing)
 - `GET /api/error400` - returns HTTP 400 error
@@ -139,6 +165,11 @@ Application runs at: **http://localhost:8080**
 
 ```bash
 curl http://localhost:8080/api/hello
+curl http://localhost:8080/api/menu
+curl -X POST "http://localhost:8080/api/orders?itemId=latte"      # 201
+curl -X POST http://localhost:8080/api/chaos/machine/break
+curl -X POST "http://localhost:8080/api/orders?itemId=espresso"   # 500 + stack trace
+curl -X POST http://localhost:8080/api/chaos/machine/repair
 curl http://localhost:8080/api/error400
 curl http://localhost:8080/api/error500
 ```
